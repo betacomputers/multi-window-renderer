@@ -1,6 +1,6 @@
 # Multi-Window Rendering Framework
 
-This project leverages `Three.js` to render customizable 3D scenes across multiple synchronized browser windows.
+This project uses `Three.js` to render customizable 3D scenes across multiple synchronized browser windows.
 
 ### Features:
 
