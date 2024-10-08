@@ -1,125 +1,131 @@
 class WindowManager {
-  #windows = [];
-  #count = 0;
-  #id = null;
-  #winData = null;
-  #winShapeChangeCallback = null;
-  #winChangeCallback = null;
+  #windows;
+  #count;
+  #id;
+  #winData;
+  #winShapeChangeCallback;
+  #winChangeCallback;
 
   constructor() {
-    // Bind the event listeners to the current instance
-    this.#initializeStorageListener();
-    this.#initializeUnloadListener();
-  }
+    let that = this;
 
-  // Initialize the event listener for localStorage changes from another window
-  #initializeStorageListener() {
+    // event listener for when localStorage is changed from another window
     addEventListener("storage", (event) => {
-      if (event.key === "windows") {
-        const newWindows = JSON.parse(event.newValue);
-        if (this.#didWindowsChange(this.#windows, newWindows)) {
-          this.#windows = newWindows;
-          if (this.#winChangeCallback) this.#winChangeCallback();
+      if (event.key == "windows") {
+        let newWindows = JSON.parse(event.newValue);
+        let winChange = that.#didWindowsChange(that.#windows, newWindows);
+
+        that.#windows = newWindows;
+
+        if (winChange) {
+          if (that.#winChangeCallback) that.#winChangeCallback();
         }
       }
     });
-  }
 
-  // Initialize the event listener for window unload to remove the window from the list
-  #initializeUnloadListener() {
-    window.addEventListener("beforeunload", () => {
-      const index = this.#getWindowIndexById(this.#id);
-      if (index > -1) {
-        this.#windows.splice(index, 1);
-        this.#updateWindowsLocalStorage();
-      }
+    // event listener for when current window is about to ble closed
+    window.addEventListener("beforeunload", function (e) {
+      let index = that.getWindowIndexFromId(that.#id);
+
+      // remove this window from the list and update local storage
+      that.#windows.splice(index, 1);
+      that.updateWindowsLocalStorage();
     });
   }
 
-  // Compare two windows arrays and return if they differ
-  #didWindowsChange(previousWindows, newWindows) {
-    if (previousWindows.length !== newWindows.length) return true;
+  // check if theres any changes to the window list
+  #didWindowsChange(pWins, nWins) {
+    if (pWins.length != nWins.length) {
+      return true;
+    } else {
+      let c = false;
 
-    return previousWindows.some((win, i) => win.id !== newWindows[i].id);
+      for (let i = 0; i < pWins.length; i++) {
+        if (pWins[i].id != nWins[i].id) c = true;
+      }
+
+      return c;
+    }
   }
 
-  // Initialize the current window with optional metadata
-  init(metaData = {}) {
+  // initiate current window (add metadata for custom data to store with each window instance)
+  init(metaData) {
     this.#windows = JSON.parse(localStorage.getItem("windows")) || [];
-    this.#count = parseInt(localStorage.getItem("count") || "0", 10) + 1;
+    this.#count = localStorage.getItem("count") || 0;
+    this.#count++;
 
     this.#id = this.#count;
-    const shape = this.#getWindowShape();
-    this.#winData = { id: this.#id, shape, metaData };
-
+    let shape = this.getWinShape();
+    this.#winData = { id: this.#id, shape: shape, metaData: metaData };
     this.#windows.push(this.#winData);
 
     localStorage.setItem("count", this.#count);
-    this.#updateWindowsLocalStorage();
+    this.updateWindowsLocalStorage();
   }
 
-  // Get the current window's shape and dimensions
-  #getWindowShape() {
-    return {
+  getWinShape() {
+    let shape = {
       x: window.screenLeft,
       y: window.screenTop,
       w: window.innerWidth,
       h: window.innerHeight,
     };
+    return shape;
   }
 
-  // Find the index of a window by its ID
-  #getWindowIndexById(id) {
-    return this.#windows.findIndex((win) => win.id === id);
+  getWindowIndexFromId(id) {
+    let index = -1;
+
+    for (let i = 0; i < this.#windows.length; i++) {
+      if (this.#windows[i].id == id) index = i;
+    }
+
+    return index;
   }
 
-  // Update the windows list in localStorage
-  #updateWindowsLocalStorage() {
+  updateWindowsLocalStorage() {
     localStorage.setItem("windows", JSON.stringify(this.#windows));
   }
 
-  // Update the current window's shape and check for changes
   update() {
-    const currentShape = this.#getWindowShape();
+    //console.log(step);
+    let winShape = this.getWinShape();
+
+    console.log(winShape.x, winShape.y);
 
     if (
-      currentShape.x !== this.#winData.shape.x ||
-      currentShape.y !== this.#winData.shape.y ||
-      currentShape.w !== this.#winData.shape.w ||
-      currentShape.h !== this.#winData.shape.h
+      winShape.x != this.#winData.shape.x ||
+      winShape.y != this.#winData.shape.y ||
+      winShape.w != this.#winData.shape.w ||
+      winShape.h != this.#winData.shape.h
     ) {
-      this.#winData.shape = currentShape;
-      const index = this.#getWindowIndexById(this.#id);
-      if (index > -1) {
-        this.#windows[index].shape = currentShape;
-      }
+      this.#winData.shape = winShape;
 
+      let index = this.getWindowIndexFromId(this.#id);
+      this.#windows[index].shape = winShape;
+
+      //console.log(windows);
       if (this.#winShapeChangeCallback) this.#winShapeChangeCallback();
-      this.#updateWindowsLocalStorage();
+      this.updateWindowsLocalStorage();
     }
   }
 
-  // Set the callback for window shape changes
   setWinShapeChangeCallback(callback) {
     this.#winShapeChangeCallback = callback;
   }
 
-  // Set the callback for window changes
   setWinChangeCallback(callback) {
     this.#winChangeCallback = callback;
   }
 
-  // Get the list of all windows
   getWindows() {
     return this.#windows;
   }
 
-  // Get the current window's data
   getThisWindowData() {
     return this.#winData;
   }
 
-  // Get the current window's ID
   getThisWindowID() {
     return this.#id;
   }
