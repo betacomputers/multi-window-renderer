@@ -91,7 +91,7 @@ class WindowManager {
     //console.log(step);
     let winShape = this.getWinShape();
 
-    console.log(winShape.x, winShape.y);
+    // console.log(winShape.x, winShape.y);
 
     if (
       winShape.x != this.#winData.shape.x ||

@@ -96,7 +96,7 @@ if (new URLSearchParams(window.location.search).get("clear")) {
 
   function updateNumberOfgeometries() {
     let wins = windowManager.getWindows();
-    console.log(wins);
+    // console.log(wins);
 
     // remove all geometries
     geometries.forEach((c) => {
