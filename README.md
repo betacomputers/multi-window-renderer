@@ -1,1 +1,1 @@
-# multi-window-3d-renderer
+# Cross Window 3D Renderer Proof of Concept
